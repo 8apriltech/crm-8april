@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+    <head>
+        <meta charset="UTF-8">
+        <title>CRM 8April Tech</title>
+
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                background: #020617;
+                color: #f8fafc;
+                padding: 30px;
+            }
+
+            h1 {
+                margin-bottom: 25px;
+            }
+
+            .kanban {
+                display: grid;
+                grid-template-columns: repeat(4, minmax(230px, 1fr));
+                gap: 22px;
+                align-items: start;
+            }
+
+
+            .column {
+                background: #020617;
+                border: 1px solid #1e293b;
+                border-radius: 12px;
+                padding: 15px;
+                min-height: 400px;
+            }
+
+            .column h2 {
+                text-align: center;
+                margin-bottom: 15px;
+                color: #38bdf8;
+                font-size: 18px;
+            }
+
+            .cards {
+                min-height: 300px;
+            }
+
+            .card {
+                background: #020617;
+                border: 1px solid #334155;
+                border-radius: 10px;
+                padding: 12px;
+                margin-bottom: 12px;
+                cursor: grab;
+                transition: border 0.2s, transform 0.1s;
+            }
+
+            .card:hover {
+                border-color: #38bdf8;
+                transform: scale(1.01);
+            }
+
+            .card strong {
+                font-size: 14px;
+                display: block;
+                margin-bottom: 5px;
+            }
+
+            .card small {
+                color: #94a3b8;
+            }
+
+            /* Cores por status */
+            .column[data-status="novo"]        { border-top: 4px solid #38bdf8; }
+            .column[data-status="em_contato"]  { border-top: 4px solid #fbbf24; }
+            .column[data-status="qualificado"] { border-top: 4px solid #22c55e; }
+            .column[data-status="fechado"]     { border-top: 4px solid #e70b0b; }
+
+            .card.novo        { border-left: 4px solid #38bdf8; }
+            .card.em_contato  { border-left: 4px solid #fbbf24; }
+            .card.qualificado { border-left: 4px solid #22c55e; }
+            .card.fechado     { border-left: 4px solid #e70b0b; }
+
+            /* Animação ao soltar */
+            .column.drop-active {
+                background: rgba(56, 189, 248, 0.06);
+            }
+
+            /* Contador */
+            .counter {
+                text-align: center;
+                font-size: 12px;
+                color: #94a3b8;
+                margin-bottom: 8px;
+            }
+
+
+            .logout-btn {
+                position: absolute;
+                top: 25px;
+                right: 40px;
+                background: transparent;
+                border: 1px solid #334155;
+                color: #94a3b8;
+                padding: 6px 14px;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 13px;
+            }
+
+            .logout-btn:hover {
+                border-color: #38bdf8;
+                color: #38bdf8;
+            }
+
+            .user-info {
+                position: absolute;
+                top: 25px;
+                right: 120px;
+                font-size: 13px;
+                color: #94a3b8;
+            }
+
+
+            .layout {
+                display: flex;
+                height: 100vh;
+                }
+
+            .sidebar {
+                width: 210px; /* antes 240 */
+                transition: width .25s ease;
+                background: linear-gradient(180deg, #020617, #020617);
+                border-right: 1px solid #1e293b;
+                padding: 18px 14px;
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-start;
+                gap: 12px;
+            }
+
+            .content {
+                flex: 1;
+                padding: 22px 28px;
+                overflow-y: auto;
+            }
+
+            .content h1 {
+                font-size: 22px;
+                margin-bottom: 22px;
+            }
+
+            .sidebar-logo {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 0px;
+                margin-bottom: 6px;
+            }
+
+            .logo-img {
+                width: 180px;
+                height: auto;
+            }
+
+            .sidebar-logo span {
+                font-size: 14px;
+                font-weight: 600;
+                color: #38bdf8;
+                text-align: center;
+            }
+
+            .menu {
+                display: flex;
+                flex-direction: column;
+                margin-top: 0;
+                gap: 4px;
+            }
+
+            .menu-item {
+                padding: 8px 12px;
+                border-radius: 8px;
+                font-size: 13px;
+                color: #94a3b8;
+            }
+
+            .menu-item.active {
+                background: rgba(56,189,248,.12);
+                border: none;
+            }
+
+            .collapse-btn {
+                background: transparent;
+                border: 1px solid #1e293b;
+                color: #94a3b8;
+                padding: 6px 10px;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 14px;
+                margin: 10px 0 12px 0;
+
+                align-self: center;
+                width: 100%;
+                display: flex;
+                justify-content: center;
+            }
+
+
+            .collapse-btn:hover {
+                color: #38bdf8;
+                border-color: #38bdf8;
+            }
+
+            .sidebar.collapsed {
+                width: 70px;
+            }
+
+            /* Esconde textos */
+            .sidebar.collapsed .sidebar-logo span,
+            .sidebar.collapsed .menu-item {
+                display: none;
+            }
+
+            /* Centraliza ícones */
+            .sidebar.collapsed .menu-item::before {
+                display: block;
+            }
+
+            /* Footer */
+            .sidebar.collapsed .sidebar-footer span,
+            .sidebar.collapsed .sidebar-footer button {
+                display: none;
+            }
+
+            .menu-item span {
+                margin-left: 8px;
+            }
+
+            .sidebar.collapsed .menu-item span {
+                display: none;
+            }
+
+            .sidebar.collapsed .menu {
+                align-items: center;
+            }
+
+            /* Overlay */
+            .modal-overlay {
+                position: fixed;
+                inset: 0;
+                background: rgba(2,6,23,.75);
+                display: none;
+                align-items: center;
+                justify-content: center;
+                z-index: 999;
+            }
+
+            /* Modal */
+            .modal {
+                background: #020617;
+                border: 1px solid #1e293b;
+                border-radius: 14px;
+                width: 420px;
+                max-width: 90%;
+                animation: modalIn .2s ease;
+            }
+
+            /* Header */
+            .modal-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 16px 20px;
+                border-bottom: 1px solid #1e293b;
+            }
+
+            .modal-header h3 {
+                font-size: 18px;
+                color: #38bdf8;
+            }
+
+            .close-btn {
+                background: transparent;
+                border: none;
+                color: #94a3b8;
+                font-size: 18px;
+                cursor: pointer;
+            }
+            .close-btn:hover {
+                color: #38bdf8;
+            }
+
+            /* Body */
+            .modal-body {
+                padding: 20px;
+                display: flex;
+                flex-direction: column;
+                gap: 14px;
+            }
+
+            .modal-field label {
+                font-size: 12px;
+                color: #64748b;
+                display: block;
+            }
+
+            .modal-field span {
+                font-size: 14px;
+            }
+
+            /* Status badge */
+            .status-badge {
+                display: inline-block;
+                padding: 4px 10px;
+                border-radius: 999px;
+                font-size: 12px;
+                margin-top: 4px;
+                background: #1e293b;
+            }
+
+            /* Footer */
+            .modal-footer {
+                padding: 14px 20px;
+                border-top: 1px solid #1e293b;
+                display: flex;
+                justify-content: flex-end;
+                gap: 10px;
+            }
+
+            .modal-footer button {
+                padding: 7px 14px;
+                border-radius: 8px;
+                cursor: pointer;
+                border: 1px solid #334155;
+                background: transparent;
+                color: #94a3b8;
+            }
+
+            .modal-footer .primary {
+                border-color: #38bdf8;
+                color: #38bdf8;
+            }
+
+            .card {
+                opacity: 0;
+                transform: translateY(6px);
+                animation: cardIn .25s ease forwards;
+            }
+
+            @keyframes cardIn {
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .card:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 10px 25px rgba(56,189,248,.12);
+                border-color: #38bdf8;
+            }
+
+            .card.moved {
+                animation: movedPulse .35s ease;
+            }
+
+            @keyframes movedPulse {
+                0%   { box-shadow: 0 0 0 rgba(56,189,248,0); }
+                50%  { box-shadow: 0 0 0 6px rgba(56,189,248,.25); }
+                100% { box-shadow: 0 0 0 rgba(56,189,248,0); }
+            }
+            
+            @keyframes modalIn {
+                from {
+                    transform: translateY(10px) scale(.96);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateY(0) scale(1);
+                    opacity: 1;
+                }
+            }
+
+            .counter {
+                transition: transform .15s ease, color .15s ease;
+            }
+
+            .counter.bump {
+                transform: scale(1.08);
+                color: #38bdf8;
+            }
+
+            /* Glow suave enquanto arrasta */
+            .column.drop-active {
+                animation: dropGlow .6s ease-in-out infinite alternate;
+            }
+
+            @keyframes dropGlow {
+                from {
+                    box-shadow: inset 0 0 0 2px rgba(56,189,248,.25);
+                }
+                to {
+                    box-shadow: inset 0 0 0 2px rgba(56,189,248,.6);
+                }
+            }
+
+            .skeleton {
+                    height: 72px;
+                    border-radius: 10px;
+                    margin-bottom: 12px;
+                    background: linear-gradient(
+                        90deg,
+                        #1e293b 25%,
+                        #334155 37%,
+                        #1e293b 63%
+                    );
+                    background-size: 400% 100%;
+                    animation: shimmer 1.4s infinite;
+                }
+
+                @keyframes shimmer {
+                    0%   { background-position: 100% 0; }
+                    100% { background-position: 0 0; }
+            }
+
+
+            body.modal-open .content {
+                    filter: blur(3px);
+                    transition: filter .2s ease;
+                }
+
+            body.modal-open .sidebar {
+                    opacity: .85;
+                    transition: opacity .2s ease;
+            }
+
+
+             .sidebar.collapsed .sidebar-logo {
+                    width: 100%;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                    padding: 6px 0;
+            }
+
+            .sidebar.collapsed .sidebar-logo {
+                    display: flex;
+                    flex-direction: column;
+            }
+
+            .sidebar.collapsed .logo-img {
+                    transition: transform .2s ease;
+            }
+
+            .sidebar.collapsed .logo-img:hover {
+                transform: scale(1.05);
+            }
+
+
+
+    </style>
+    </head>
+
+    <body>
+
+        <script>
+        if (!localStorage.getItem("token")) {
+            window.location.href = "/login.html";
+        }
+        </script>
+
+        <div class="layout">
+
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            
+            <button class="collapse-btn" onclick="toggleSidebar()">☰</button>
+            
+            <div class="sidebar-logo">
+                <img src="https://i.ibb.co/cKLybywf/Chat-GPT-Image-23-de-dez-de-2025-10-33-35.png" class="logo-img">
+                <span>8April CRM</span>
+            </div>
+
+                <nav class="menu">
+                <a class="menu-item active">📊 <span>Kanban</span></a>
+                <a class="menu-item">📋 <span>Leads</span></a>
+                <a class="menu-item">📈 <span>Relatórios</span></a>
+                <a class="menu-item">⚙️ <span>Configurações</span></a>
+
+            </nav>
+
+            <div class="sidebar-footer">
+                <span id="user-info"></span>
+                <button onclick="logout()">Sair</button>
+            </div>
+        </aside>
+
+        <!-- CONTEÚDO PRINCIPAL -->
+        <main class="content">
+
+            <h1 style="margin-bottom:20px;">🖥️ CRM - 8April Tech</h1>
+
+            <div class="kanban">
+
+                <div class="column" data-status="novo" ondragover="allowDrop(event)" ondragleave="removeDrop(event)" ondrop="drop(event)">
+                    <h2>Novo</h2>
+                    <div class="counter" id="count-novo">0</div>
+                    <div class="cards" id="novo"></div>
+                </div>
+
+                <div class="column" data-status="em_contato" ondragover="allowDrop(event)" ondrop="drop(event)">
+                    <h2>Em Contato</h2>
+                    <div class="counter" id="count-em_contato">0</div>
+                    <div class="cards" id="em_contato"></div>
+                </div>
+
+                <div class="column" data-status="qualificado" ondragover="allowDrop(event)" ondrop="drop(event)">
+                    <h2>Qualificado</h2>
+                    <div class="counter" id="count-qualificado">0</div>
+                    <div class="cards" id="qualificado"></div>
+                </div>
+
+                <div class="column" data-status="fechado" ondragover="allowDrop(event)" ondrop="drop(event)">
+                    <h2>Fechado</h2>
+                    <div class="counter" id="count-fechado">0</div>
+                    <div class="cards" id="fechado"></div>
+                </div>
+
+                </div>
+        </main>
+
+        </div>
+
+        <script>
+
+            let isDragging = false;
+            let draggedCard = null;
+
+            function allowDrop(ev) {
+                ev.preventDefault();
+                ev.currentTarget.classList.add("drop-active");
+            }
+
+           function drag(ev) {
+                isDragging = true;
+                draggedCard = ev.currentTarget;
+            }
+
+            function updateCounters() {
+                ["novo", "em_contato", "qualificado", "fechado"].forEach(status => {
+                    const counterEl = document.getElementById(`count-${status}`);
+                    const count = document.getElementById(status).children.length;
+                    
+                    counterEl.innerText = `${count} lead(s)`;
+
+                    counterEl.classList.add("bump");
+                    setTimeout(() => counterEl.classList.remove("bump"), 150);
+                });
+            }
+
+
+            function drop(ev) {
+                    ev.preventDefault();
+                    const column = ev.currentTarget;
+
+                    column.classList.remove("drop-active");
+
+                    const newStatus = column.dataset.status;
+                    const leadId = draggedCard.dataset.id;
+
+                    column.querySelector(".cards").appendChild(draggedCard);
+                    draggedCard.className = `card ${newStatus}`;
+
+                    draggedCard.classList.add("moved");
+                    setTimeout(() => draggedCard.classList.remove("moved"), 400);
+
+                    isDragging = false;
+
+                    fetch(`/api/leads/${leadId}`, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ status: newStatus })
+                    });
+
+                    updateCounters();
+                }
+
+
+            async function carregarKanban() {
+
+            function showSkeletons() {
+                ["novo","em_contato","qualificado","fechado"].forEach(status => {
+                    const col = document.getElementById(status);
+                    col.innerHTML = `
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                    `;
+                });
+            }
+
+            // ✅ 1. MOSTRA skeleton ANTES DE QUALQUER COISA
+            showSkeletons();
+
+            const token = localStorage.getItem("token");
+            if (!token) {
+                window.location.href = "/login.html";
+                return;
+            }
+
+            const resp = await fetch("/api/leads", {
+                headers: { "Authorization": "Bearer " + token }
+            });
+
+            if (resp.status === 401) {
+                localStorage.removeItem("token");
+                window.location.href = "/login.html";
+                return;
+            }
+
+            if (!resp.ok) return;
+
+            const leads = await resp.json();
+
+            await new Promise(r => setTimeout(r, 600));
+
+            // ✅ 2. LIMPA skeleton ANTES DE RENDERIZAR
+            ["novo","em_contato","qualificado","fechado"].forEach(status => {
+                document.getElementById(status).innerHTML = "";
+            });
+
+            // ✅ 3. RENDERIZA OS CARDS
+            leads.forEach((lead, index) => {
+                const card = document.createElement("div");
+                card.className = `card ${lead.status}`;
+                card.style.animationDelay = `${index * 40}ms`;
+                card.draggable = true;
+                card.dataset.id = lead.id;
+                card.ondragstart = drag;
+
+                card.innerHTML = `
+                    <strong>${lead.nome ?? "Sem nome"}</strong>
+                    ${lead.telefone ?? ""}<br>
+                    <small>${lead.origem ?? ""}</small>
+                `;
+
+                card.addEventListener("click", () => {
+                    if (!isDragging) {
+                        openModal(lead);
+                    }
+                });
+
+                const coluna = document.getElementById(lead.status);
+                if (coluna) coluna.appendChild(card);
+            });
+
+            updateCounters();
+        }
+
+
+            document.addEventListener("DOMContentLoaded", carregarKanban);
+
+            function logout() {
+                localStorage.removeItem("token");
+                window.location.href = "/login.html";
+            }
+
+            const userEmail = localStorage.getItem("user_email");
+            if (userEmail) {
+                document.getElementById("user-info").innerText = userEmail;
+            }
+
+            function toggleSidebar() {
+                document.querySelector(".sidebar").classList.toggle("collapsed");
+            }
+
+            function openModal(lead) {
+                document.body.classList.add("modal-open");
+
+                document.getElementById("modal-title").innerText = lead.nome ?? "Lead";
+                document.getElementById("modal-phone").innerText = lead.telefone ?? "-";
+                document.getElementById("modal-source").innerText = lead.origem ?? "-";
+                document.getElementById("modal-status").innerText = lead.status;
+
+                document.getElementById("lead-modal").style.display = "flex";
+            }
+
+            function closeModal(e) {
+                if (!e || e.target.id === "lead-modal") {
+                    document.getElementById("lead-modal").style.display = "none";
+                    document.body.classList.remove("modal-open");
+                }
+            }
+
+
+            document.addEventListener("keydown", (e) => {
+                if (e.key === "Escape") {
+                    closeModal();
+                }
+            });
+
+            function removeDrop(ev) {
+                ev.currentTarget.classList.remove("drop-active");
+            }
+
+
+        </script>
+
+        <!-- MODAL -->
+        <div id="lead-modal" class="modal-overlay" onclick="closeModal(event)">
+        <div class="modal">
+            <div class="modal-header">
+            <h3 id="modal-title">Lead</h3>
+            <button class="close-btn" onclick="closeModal()">✕</button>
+            </div>
+
+            <div class="modal-body">
+            <div class="modal-field">
+                <label>Telefone</label>
+                <span id="modal-phone"></span>
+            </div>
+
+            <div class="modal-field">
+                <label>Origem</label>
+                <span id="modal-source"></span>
+            </div>
+
+            <div class="modal-field">
+                <label>Status</label>
+                <span id="modal-status" class="status-badge"></span>
+            </div>
+            </div>
+
+            <div class="modal-footer">
+            <button class="secondary">Histórico</button>
+            <button class="primary">Editar</button>
+            </div>
+        </div>
+        </div>
+
+
+    </body>
+
+
+</html>
