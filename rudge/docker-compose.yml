@@ -1,0 +1,17 @@
+services:
+  rudge:
+    image: nginx
+    volumes:
+      - ./:/usr/share/nginx/html
+    networks:
+      - root_default
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.rudge.rule=Host(`rudge.8april.com.br`)"
+      - "traefik.http.routers.rudge.entrypoints=websecure"
+      - "traefik.http.routers.rudge.tls.certresolver=letsencrypt"
+      - "traefik.http.services.rudge.loadbalancer.server.port=80"
+
+networks:
+  root_default:
+    external: true
